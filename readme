@@ -1,14 +1,10 @@
 Make sure you run `sudo apt-get install gearman-job-server php-gearman`
 
-Install via composer `composer require myaero/aeroworker`
-
-Create workers implementing `WorkerInterface`
-
-Register workers using `WorkerRegistry::register()`
+Install via composer `composer require myaero/aero-worker`
 
 Run `vendor/bin/aeroworker` to start processing
 
-OR setup on supervisor:
+OR setup on supervisor `sudo apt install supervisor -y`:
 
 `[program:aeroworker]
 process_name=%(program_name)s_%(process_num)02d
@@ -20,3 +16,39 @@ user=root
 numprocs=4
 redirect_stderr=true
 stdout_logfile=/var/log/supervisor/aeroworker.log`
+
+Sample worker `aeroworker.conf`:
+
+`namespace App\Queues\Workers;
+
+use aeroWorker\WorkerInterface;
+use aeroWorker\WorkerRegistry;
+
+class EmailWorker implements WorkerInterface
+{
+    public function getName(): string
+    {
+        return 'email_worker';
+    }
+
+    public function register($worker): void
+    {
+        $worker->addFunction('send_email', [$this, 'handleEmail']);
+    }
+
+    private function bootApplication(): void
+    {
+        require_once '/var/www/html/vendor/autoload.php';
+        app()->bootApplication();
+    }
+
+    public function handleEmail($job)
+    {
+        $this->bootApplication();
+
+        $workload = json_decode($job->workload(), true);
+
+        logger('testing logs');
+        return json_encode(['test' => 'email logged']);
+    }
+}`
