@@ -7,3 +7,16 @@ Create workers implementing `WorkerInterface`
 Register workers using `WorkerRegistry::register()`
 
 Run `vendor/bin/aeroworker` to start processing
+
+OR setup on supervisor:
+
+`[program:aeroworker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /var/www/html/vendor/bin/aeroworker
+directory=/var/www/html
+autostart=true
+autorestart=true
+user=www-data
+numprocs=4
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/aeroworker.log`
