@@ -35,14 +35,13 @@ try {
 
     // Step 1: Check if aeroworker.json exists
     $autoloadJsonPaths = [
-        __DIR__ . '/../../aeroworker.json',
-        __DIR__ . '/../aeroworker.json'
+        '/var/www/html/aeroworker.json'
     ];
     foreach ($autoloadJsonPaths as $aeroworkerConfigPath) {
         if (file_exists($aeroworkerConfigPath)) {
             $aeroworkerConfig = json_decode(file_get_contents($aeroworkerConfigPath), true);
             if (isset($aeroworkerConfig['workers_directory'])) {
-                $workersDirectory = (str_replace('aeroworker.json', '', $aeroworkerConfigPath)) . '/' . ltrim($aeroworkerConfig['workers_directory'], '/');
+                $workersDirectory = (str_replace('aeroworker.json', '', $aeroworkerConfigPath)) . ltrim($aeroworkerConfig['workers_directory'], '/');
             }
         }
     }
