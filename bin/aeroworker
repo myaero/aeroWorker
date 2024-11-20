@@ -1,0 +1,26 @@
+<?php
+
+$autoloadPaths = [
+    __DIR__ . '/../../../autoload.php',
+    __DIR__ . '/../vendor/autoload.php'
+];
+
+$loaded = false;
+foreach ($autoloadPaths as $path) {
+    if (file_exists($path)) {
+        require_once $path;
+        $loaded = true;
+        break;
+    }
+}
+
+if (!$loaded) {
+    die('Unable to find composer autoloader. Please run composer install.' . PHP_EOL);
+}
+
+// Load config if exists
+$configPath = getcwd() . '/config/aeroworker.php';
+$config = file_exists($configPath) ? require $configPath : [];
+
+$manager = new \aeroWorker\WorkerManager($config);
+$manager->start();

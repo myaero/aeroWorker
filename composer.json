@@ -1,0 +1,17 @@
+{
+    "name": "myaero/aeroworker",
+    "description": "Custom PHP Gearman worker package",
+    "type": "library",
+    "require": {
+        "php": ">=7.4",
+        "ext-gearman": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "aeroWorker\\": "src/"
+        }
+    },
+    "bin": [
+        "bin/aeroworker"
+    ]
+}
