@@ -1,5 +1,5 @@
 {
-    "name": "myaero/aeroworker",
+    "name": "myaero/aero-worker",
     "description": "Custom PHP Gearman worker package",
     "type": "library",
     "require": {
