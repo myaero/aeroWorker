@@ -5,6 +5,7 @@ declare(strict_types=1);
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
+# Load Workers
 // Find and require the autoloader
 $autoloadPaths = [
     __DIR__ . '/../../../autoload.php',
@@ -89,3 +90,11 @@ try {
     ));
     exit(1);
 }
+
+# Register commands
+use Symfony\Component\Console\Application;
+use aeroWorker\Commands\RestartWorkerCommand;
+
+$application = new Application();
+$application->add(new RestartWorkerCommand());
+$application->run();
