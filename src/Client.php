@@ -86,7 +86,7 @@ class Client
      * 
      * @return mixed
      */
-    public function task(string $function, array $data): mixed
+    public function syncTask(string $function, array $data): mixed
     {
         return json_decode($this->client->addTask($function, json_encode($data)), true);
     }
