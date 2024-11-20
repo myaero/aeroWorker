@@ -1,5 +1,11 @@
+#!/usr/bin/env php
 <?php
 
+declare(strict_types=1);
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
+
+// Find and require the autoloader
 $autoloadPaths = [
     __DIR__ . '/../../../autoload.php',
     __DIR__ . '/../vendor/autoload.php'
@@ -15,12 +21,72 @@ foreach ($autoloadPaths as $path) {
 }
 
 if (!$loaded) {
-    die('Unable to find composer autoloader. Please run composer install.' . PHP_EOL);
+    fwrite(STDERR, 'Unable to find composer autoloader. Please run composer install.' . PHP_EOL);
+    exit(1);
 }
 
-// Load config if exists
-$configPath = getcwd() . '/config/aeroworker.php';
-$config = file_exists($configPath) ? require $configPath : [];
+try {
+    // Load config if exists
+    $configPath = getcwd() . '/config/aeroworker.php';
+    $config = file_exists($configPath) ? require $configPath : [];
 
-$manager = new \aeroWorker\WorkerManager($config);
-$manager->start();
+    // Determine the workers directory
+    $workersDirectory = null;
+
+    // Step 1: Check if aeroworker.json exists
+    $autoloadJsonPaths = [
+        __DIR__ . '/../../aeroworker.json',
+        __DIR__ . '/../aeroworker.json'
+    ];
+    foreach ($autoloadJsonPaths as $aeroworkerConfigPath) {
+        if (file_exists($aeroworkerConfigPath)) {
+            $aeroworkerConfig = json_decode(file_get_contents($aeroworkerConfigPath), true);
+            if (isset($aeroworkerConfig['workers_directory'])) {
+                $workersDirectory = (str_replace('aeroworker.json', '', $aeroworkerConfigPath)) . '/' . ltrim($aeroworkerConfig['workers_directory'], '/');
+            }
+        }
+    }
+
+    // Step 2: Fallback to default directory if no configuration is found
+    if (!$workersDirectory) {
+        $workersDirectory = getcwd() . '/src/Workers';
+    }
+
+    // Load workers from the determined directory
+    \aeroWorker\WorkerAutoLoader::loadWorkers($workersDirectory);
+
+    // Initialize the worker manager
+    $manager = new \aeroWorker\WorkerManager($config);
+
+    // Set up error handling
+    set_error_handler(function ($severity, $message, $file, $line) {
+        throw new ErrorException($message, 0, $severity, $file, $line);
+    });
+
+    // Graceful shutdown
+    pcntl_signal(SIGTERM, function () use ($manager) {
+        $manager->shutdown();
+        exit(0);
+    });
+
+    pcntl_signal(SIGINT, function () use ($manager) {
+        $manager->shutdown();
+        exit(0);
+    });
+
+    // Enable async signals
+    pcntl_async_signals(true);
+
+    echo "Worker starting..." . PHP_EOL;
+    $manager->start();
+} catch (Throwable $e) {
+    fwrite(STDERR, sprintf(
+        "[%s] Error: %s in %s:%d\nStack trace:\n%s\n",
+        date('Y-m-d H:i:s'),
+        $e->getMessage(),
+        $e->getFile(),
+        $e->getLine(),
+        $e->getTraceAsString()
+    ));
+    exit(1);
+}
